@@ -1,0 +1,36 @@
+{
+  "expo": {
+    "name": "SecureGate",
+    "slug": "securegate",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#6B46C1",
+      "resizeMode": "contain"
+    },
+    "extra": {
+      "apiUrl": "http://10.50.163.12:5000/api",
+      "eas": {
+        "projectId": "472c34e7-5bff-468c-b18e-2554ad0da303"
+      }
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.securegate.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Allow SecureGate to capture visitor photos"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#6B46C1"
+      },
+      "package": "com.securegate.app",
+      "permissions": [
+        "CAMERA"
+      ]
+    },
+    "owner": "krushna081s-organization"
+  }
+}

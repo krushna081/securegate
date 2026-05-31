@@ -1,0 +1,22 @@
+node_modules/
+.expo/
+dist/
+*.tsbuildinfo
+
+# Environment files
+.env
+backend/.env
+backend/dist/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Expo
+.expo-shared/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
