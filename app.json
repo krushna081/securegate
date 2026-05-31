@@ -6,9 +6,13 @@
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "splash": {
+      "image": "./frontend/src/assets/icon.png",
       "backgroundColor": "#6B46C1",
       "resizeMode": "contain"
     },
+    "plugins": [
+      "expo-splash-screen"
+    ],
     "extra": {
       "apiUrl": "http://10.50.163.12:5000/api",
       "eas": {
