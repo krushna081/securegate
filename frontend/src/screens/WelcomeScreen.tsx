@@ -5,6 +5,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { colors, shadows } from '../constants/theme';
 import CustomButton from '../components/CustomButton';
+import { Ionicons } from '@expo/vector-icons';
 
 const WelcomeScreen = () => {
   const navigation = useNavigation<any>();
@@ -17,7 +18,7 @@ const WelcomeScreen = () => {
         bounces={false}
       >
         <View style={styles.gradientSection}>
-          <Text style={styles.shield}>🛡️</Text>
+          <Ionicons name="shield-checkmark" size={72} color="#FFFFFF" />
           <Text style={styles.appName}>SecureGate</Text>
           <Text style={styles.tagline}>Smart Visitor Management{'\n'}for Modern Societies</Text>
         </View>
@@ -26,7 +27,7 @@ const WelcomeScreen = () => {
           <View style={styles.infoCard}>
             <View style={styles.cardHeader}>
               <View style={styles.cardIconCircle}>
-                <Text style={styles.cardIcon}>ℹ️</Text>
+                <Ionicons name="information-circle-outline" size={24} color={colors.primary} />
               </View>
               <Text style={styles.cardTitle}>About the App</Text>
             </View>

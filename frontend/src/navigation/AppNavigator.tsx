@@ -10,6 +10,8 @@ import SettingsScreen from '../screens/SettingsScreen';
 import PreApprovalScreen from '../screens/PreApprovalScreen';
 import EditVisitorScreen from '../screens/guard/EditVisitorScreen';
 import EditProfileScreen from '../screens/EditProfileScreen';
+import PrivacyScreen from '../screens/PrivacyScreen';
+import TermsScreen from '../screens/TermsScreen';
 import ResidentsListScreen from '../screens/guard/ResidentsListScreen';
 import NotificationPermissionScreen from '../screens/NotificationPermissionScreen';
 import { checkPermissionStatus, setNotificationResponseHandler } from '../services/notificationService';
@@ -102,6 +104,8 @@ const AppNavigator = () => {
             <Stack.Screen name="EditVisitor" component={EditVisitorScreen} />
             <Stack.Screen name="EditProfile" component={EditProfileScreen} />
             <Stack.Screen name="ResidentsList" component={ResidentsListScreen} />
+            <Stack.Screen name="Privacy" component={PrivacyScreen} />
+            <Stack.Screen name="Terms" component={TermsScreen} />
           </>
         ) : (
           <Stack.Screen name="Auth" component={AuthNavigator} />

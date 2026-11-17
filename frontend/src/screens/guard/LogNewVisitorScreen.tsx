@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { useTheme } from '../../context/ThemeContext';
 import { visitorService } from '../../services/visitorService';
 import api from '../../services/api';
@@ -68,10 +69,14 @@ const LogNewVisitorScreen = () => {
           const result = await ImagePicker.launchCameraAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
             quality: 0.7,
-            base64: true,
           });
           if (!result.canceled && result.assets[0]) {
-            setPhoto(result.assets[0].base64 || null);
+            const manipulated = await ImageManipulator.manipulateAsync(
+              result.assets[0].uri,
+              [{ resize: { width: 800 } }],
+              { compress: 0.6, format: ImageManipulator.SaveFormat.JPEG, base64: true }
+            );
+            setPhoto(manipulated.base64 || null);
           }
         },
       },
@@ -81,10 +86,14 @@ const LogNewVisitorScreen = () => {
           const result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
             quality: 0.7,
-            base64: true,
           });
           if (!result.canceled && result.assets[0]) {
-            setPhoto(result.assets[0].base64 || null);
+            const manipulated = await ImageManipulator.manipulateAsync(
+              result.assets[0].uri,
+              [{ resize: { width: 800 } }],
+              { compress: 0.6, format: ImageManipulator.SaveFormat.JPEG, base64: true }
+            );
+            setPhoto(manipulated.base64 || null);
           }
         },
       },

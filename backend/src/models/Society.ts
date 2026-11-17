@@ -4,14 +4,15 @@ export interface ISociety extends Document {
   name: string;
   address: string;
   createdAt: Date;
+  updatedAt: Date;
 }
 
 const societySchema = new Schema<ISociety>(
   {
-    name: { type: String, required: true, trim: true },
-    address: { type: String, required: true, trim: true },
+    name: { type: String, required: true, trim: true, unique: true, maxlength: 100 },
+    address: { type: String, required: true, trim: true, default: '', maxlength: 200 },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export default mongoose.model<ISociety>('Society', societySchema);

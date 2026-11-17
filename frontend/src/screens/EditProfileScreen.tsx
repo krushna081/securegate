@@ -5,9 +5,10 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
-import { authService } from '../services/authService';
+import authService from '../services/authService';
 import CustomButton from '../components/CustomButton';
 
 const EditProfileScreen = () => {
@@ -38,10 +39,16 @@ const EditProfileScreen = () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       quality: 0.7,
-      base64: true,
     });
     if (!result.canceled && result.assets[0]) {
-      setPhoto(`data:image/jpeg;base64,${result.assets[0].base64}`);
+      const manipulated = await ImageManipulator.manipulateAsync(
+        result.assets[0].uri,
+        [{ resize: { width: 800 } }],
+        { compress: 0.6, format: ImageManipulator.SaveFormat.JPEG, base64: true }
+      );
+      if (manipulated.base64) {
+        setPhoto(`data:image/jpeg;base64,${manipulated.base64}`);
+      }
     }
   };
 
@@ -74,7 +81,7 @@ const EditProfileScreen = () => {
     }
     try {
       const res = await authService.verifyProfileOtp(otp.trim());
-      setPhoneVerifiedToken(res.phoneVerifiedToken);
+      setPhoneVerifiedToken(res.verificationToken);
       Alert.alert('Verified', 'Phone number verified successfully');
     } catch (err: any) {
       Alert.alert('Error', err.message || 'Invalid OTP');
@@ -97,7 +104,7 @@ const EditProfileScreen = () => {
           return;
         }
         updates.phoneNumber = phoneNumber;
-        updates.phoneVerifiedToken = phoneVerifiedToken;
+        updates.verificationToken = phoneVerifiedToken;
       }
 
       if (phoneNumber2 !== user?.phoneNumber2) {
@@ -123,7 +130,7 @@ const EditProfileScreen = () => {
 
       const { user: updatedUser } = await authService.updateProfile(updates);
 
-      const { getToken } = await import('../services/api');
+      const { getToken } = await import('../services/tokenStorage');
       const token = await getToken();
       if (token) {
         login(updatedUser, token);

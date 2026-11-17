@@ -4,6 +4,7 @@ import {
   TextInput, Alert, Linking, Platform, ScrollView,
 } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import { visitorService } from '../services/visitorService';
 import ResidentProfileModal from './ResidentProfileModal';
@@ -94,7 +95,7 @@ const VisitorActionModal = ({ visible, visitor, onEdit, onDelete, onClose, onRef
           <ScrollView contentContainerStyle={styles.scrollCenter} keyboardShouldPersistTaps="handled">
             <View style={[styles.card, { backgroundColor: colors.card }]}>
               <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
-                <Text style={[styles.closeBtnText, { color: colors.textMuted }]}>✕</Text>
+                <Ionicons name="close" size={22} color={colors.textMuted} />
               </TouchableOpacity>
 
               <TouchableOpacity onPress={() => visitor.photoUrl && setShowPhoto(true)} activeOpacity={visitor.photoUrl ? 0.7 : 1}>

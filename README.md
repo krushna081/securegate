@@ -1,251 +1,75 @@
 # SecureGate
 
-**Smart Visitor Management System for Modern Residential Societies**
-
-SecureGate is a full-stack mobile application that streamlines visitor entry and management at residential societies. Guards can log visitors with photos, residents receive real-time push notifications and approve/reject visitors, and all activity is tracked digitally. Built with React Native (Expo) for the frontend and Node.js/Express/MongoDB for the backend.
+SecureGate is a mobile-first visitor management app for residential societies. Guards log arrivals, residents approve or reject visitors, and admins manage flats, residents, and meetings.
 
 ## Features
 
-- **OTP-based Authentication** — Email OTP via Resend, no passwords needed
-- **Role-based Access** — Guard, Resident, and Admin roles with proper authorization
-- **Visitor Logging** — Capture visitor photos via camera/gallery, assign to flat
-- **Push Notifications** — Expo push notifications with Approve/Reject quick actions
-- **Visitor Approval Flow** — Residents approve/reject visitors from dashboard
-- **Pre-approved Guests** — Residents can pre-approve guests with expected time and vehicle info
-- **Meeting Management** — Society meeting scheduling (guard/admin)
-- **Dashboard Analytics** — Stats cards with counts of today's visitors, pending approvals, etc.
-- **In-App Notifications** — Notification history with read/unread tracking
-- **Dark Mode** — System-aware theme toggle
-- **Cross-platform** — Android + iOS + Web
+- Email OTP authentication with role-based access
+- Guard visitor logging with compressed photos
+- Resident approval workflow and pre-approved guests
+- Push notifications for pending visitors
+- Society-scoped data access
+- Account deletion and theme support
 
-## Tech Stack
-
-### Frontend
-| Technology | Purpose |
-|---|---|
-| React Native 0.81 + Expo SDK 54 | Mobile framework |
-| TypeScript | Type safety |
-| React Navigation (native-stack + bottom-tabs) | Routing |
-| TanStack React Query v5 | Server state management |
-| React Hook Form + Zod | Form validation |
-| Axios | HTTP client |
-| Expo SecureStore | Secure JWT storage |
-| Expo Image Picker + Camera | Photo capture |
-| Expo Notifications | Push notifications |
+## Local development
 
 ### Backend
-| Technology | Purpose |
-|---|---|
-| Node.js + Express | REST API |
-| TypeScript | Type safety |
-| MongoDB + Mongoose | Database & ODM |
-| JWT (jsonwebtoken) | Auth tokens |
-| Resend | Email OTP delivery |
-| Expo Server SDK | Push notifications |
-| express-rate-limit | Rate limiting |
-| Socket.IO | Real-time events (optional) |
-
-## Project Structure
-
-```
-securegate/
-├── App.tsx                          # Root: providers, navigation, notification setup
-├── app.json                         # Expo config
-├── package.json                     # Frontend deps & scripts
-├── tsconfig.json                    # TypeScript config (strict, @/* alias)
-├── vercel.json                      # Vercel deploy config
-│
-├── frontend/src/
-│   ├── components/                  # Reusable UI
-│   │   ├── CustomButton.tsx         # Themed button variants
-│   │   ├── LoadingSkeleton.tsx      # Basic shimmer skeleton
-│   │   ├── PreApprovalActionModal.tsx
-│   │   ├── PushNotificationBanner.tsx
-│   │   ├── ResidentProfileModal.tsx
-│   │   ├── SkeletonLoader.tsx       # Specialized skeletons
-│   │   ├── StatsCard.tsx            # Dashboard stat card
-│   │   ├── VisitCard.tsx            # Visitor list item
-│   │   ├── VisitorActionModal.tsx   # Full visitor details modal
-│   │   └── VisitorCard.tsx          # Visitor card with approval actions
-│   ├── constants/theme.ts           # Colors, shadows, common styles
-│   ├── context/
-│   │   ├── AuthContext.tsx           # Auth state (user, token, login/logout)
-│   │   └── ThemeContext.tsx          # Light/dark mode with full color sets
-│   ├── navigation/
-│   │   ├── AppNavigator.tsx         # Root: auth flow vs main tabs
-│   │   ├── AuthNavigator.tsx        # Welcome → SignIn → OTP → CreateAccount
-│   │   └── MainTabNavigator.tsx     # Role-based bottom tabs
-│   ├── screens/
-│   │   ├── WelcomeScreen.tsx        # "About the App" landing
-│   │   ├── EditProfileScreen.tsx    # Edit user profile
-│   │   ├── PreApprovalScreen.tsx    # Resident pre-approved guests
-│   │   ├── SettingsScreen.tsx       # Dark mode, version info
-│   │   ├── NotificationPermissionScreen.tsx
-│   │   ├── auth/
-│   │   │   ├── SignInScreen.tsx
-│   │   │   ├── OtpVerificationScreen.tsx
-│   │   │   └── CreateAccountScreen.tsx
-│   │   └── guard/
-│   │       ├── GuardDashboardScreen.tsx
-│   │       ├── LogNewVisitorScreen.tsx
-│   │       ├── EditVisitorScreen.tsx
-│   │       ├── VisitorsListScreen.tsx
-│   │       ├── UpcomingVisitorsScreen.tsx
-│   │       ├── ProfileScreen.tsx
-│   │       └── ResidentsListScreen.tsx
-│   ├── services/
-│   │   ├── api.ts                   # Axios instance with JWT interceptor
-│   │   ├── authService.ts           # Auth API calls
-│   │   ├── visitorService.ts        # Visitor & pre-approval & user API
-│   │   ├── meetingService.ts        # Meeting CRUD
-│   │   └── notificationService.ts   # Push notification setup & handlers
-│   ├── types/index.ts               # TS interfaces (User, Visitor, Flat, etc.)
-│   └── utils/format.ts             # Date/time formatting, status colors
-│
-├── backend/
-│   ├── .env.example                 # Env template
-│   ├── package.json                 # Backend deps (Express, Mongoose, etc.)
-│   ├── tsconfig.json
-│   ├── vercel.json
-│   ├── config/db.ts                 # MongoDB connection
-│   ├── controllers/
-│   │   ├── authController.ts        # sendOtp, verifyOtp, createAccount
-│   │   ├── userController.ts        # Profile CRUD, flats, societies, push token
-│   │   ├── visitorController.ts     # Visitor CRUD, status updates
-│   │   ├── preApprovalController.ts # Pre-approved guest management
-│   │   ├── meetingController.ts     # Meeting CRUD
-│   │   └── notificationController.ts # In-app notifications, catch-up
-│   ├── middleware/
-│   │   ├── authMiddleware.ts        # JWT verify + role authorization
-│   │   └── errorHandler.ts          # Global error handler
-│   ├── models/
-│   │   ├── User.ts                  # email, role, society, flat, pushToken
-│   │   ├── Visitor.ts               # name, photo, flat, status, vehicle
-│   │   ├── Flat.ts                  # society, flatNumber, block, resident
-│   │   ├── Society.ts               # name, address
-│   │   ├── Otp.ts                   # email, otp, expiresAt (TTL index)
-│   │   ├── PreApproval.ts           # guestName, vehicle, expectedTime
-│   │   ├── Notification.ts          # userId, title, body, isRead
-│   │   └── Meeting.ts               # society, title, date, location
-│   ├── routes/
-│   │   ├── authRoutes.ts
-│   │   ├── userRoutes.ts
-│   │   ├── visitorRoutes.ts
-│   │   ├── preApprovalRoutes.ts
-│   │   ├── meetingRoutes.ts
-│   │   └── notificationRoutes.ts
-│   ├── services/
-│   │   ├── emailService.ts          # Resend integration
-│   │   └── pushService.ts           # Expo push notification sender
-│   ├── utils/constants.ts           # Enums (roles, statuses, visitor types)
-│   └── server.ts                    # Express app entry
-│
-└── android/                         # Expo-generated Android native project
-```
-
-## Getting Started
-
-### Prerequisites
-- Node.js >= 18
-- MongoDB (local or Atlas)
-- Expo Go app (or emulator)
-- Resend API key (for email OTP)
-
-### Backend Setup
 
 ```bash
 cd backend
-npm install
-
-# Configure environment
 cp .env.example .env
-# Edit .env with:
-#   MONGODB_URI=<your-mongo-uri>
-#   JWT_SECRET=<your-secret>
-#   RESEND_API_KEY=<your-resend-key>
-
-# Development (hot reload)
+# Fill JWT_SECRET and, for production, RESEND_API_KEY
+npm ci
 npm run dev
+```
 
-# Production build
-npm run build
+Create the first admin:
+
+```bash
+npm run create-admin -- admin@example.com "Admin Name" "+911234567890"
+```
+
+### Mobile
+
+```bash
+npm ci
+cp .env.example .env   # set EXPO_PUBLIC_API_URL if needed
 npm start
 ```
 
-### Frontend Setup
+For Android emulators the default API URL is `http://10.0.2.2:5000/api`. Physical devices need `EXPO_PUBLIC_API_URL`.
+
+## Verification
+
+Backend:
 
 ```bash
-# Install dependencies
-npm install
-
-# Start Expo
-npx expo start
-# Scan QR code with Expo Go, or press 'a' for Android / 'i' for iOS
+cd backend
+npm run lint
+npm run typecheck
+npm test
+npm run build
+npm audit --omit=dev --audit-level=high
 ```
 
-Update `app.json` → `extra.apiUrl` to point to your backend (default: `http://10.50.163.12:5000/api`).
+Mobile:
 
-### API Endpoints
-
-| Method | Endpoint | Auth | Description |
-|---|---|---|---|
-| POST | `/api/auth/send-otp` | No | Send OTP to email |
-| POST | `/api/auth/verify-otp` | No | Verify OTP & return JWT |
-| POST | `/api/auth/create-account` | No | Register new user |
-| GET | `/api/users/profile` | Yes | Get profile |
-| PATCH | `/api/users/profile` | Yes | Update profile |
-| GET | `/api/users/all` | Guard/Admin | List users |
-| GET | `/api/users/flats` | Yes | List flats |
-| GET | `/api/users/flats/search` | Yes | Search flats |
-| GET | `/api/users/societies` | Admin | List societies |
-| POST | `/api/visitors` | Guard/Admin | Log visitor |
-| GET | `/api/visitors` | Yes | List visitors |
-| PATCH | `/api/visitors/:id/status` | Resident/Guard/Admin | Approve/reject |
-| PUT | `/api/visitors/:id` | Guard/Admin | Update visitor |
-| DELETE | `/api/visitors/:id` | Guard/Admin | Delete visitor |
-| POST | `/api/pre-approvals` | Resident | Create pre-approved guest |
-| GET | `/api/pre-approvals/my` | Resident | My pre-approvals |
-| GET | `/api/pre-approvals/all` | Guard/Admin | All pre-approvals |
-| POST | `/api/meetings` | Guard/Admin | Create meeting |
-| GET | `/api/meetings` | Yes | List meetings |
-| GET | `/api/notifications` | Yes | List notifications |
-| PATCH | `/api/notifications/:id/read` | Yes | Mark as read |
-| GET | `/api/notifications/catchup` | Yes | Missed visitors catch-up |
-
-## Scripts
-
-### Frontend
 ```bash
-npm start              # Expo dev server
-npm run android        # Android emulator
-npm run ios            # iOS simulator
-npm run web            # Web browser
-```
-
-### Backend
-```bash
-npm run dev            # Development (ts-node + nodemon)
-npm run build          # Compile TypeScript → dist/
-npm start              # Production (node dist/server.js)
+npm run typecheck
+npx expo export --platform android --no-bytecode --output-dir dist
+npm audit --omit=dev --audit-level=high
 ```
 
 ## Deployment
 
-The backend is optimized for Vercel deployment. Root `vercel.json` builds the backend and routes all traffic to `backend/dist/server.js`.
-
-```bash
-vercel --prod
-```
+- Backend: deploy `backend/` to Vercel or another Node host. Set all required environment variables.
+- Mobile: build with EAS using `eas build`.
 
 ## Security
 
-- All API routes (except auth) require JWT Bearer token
-- Role-based middleware restricts endpoints (Guard/Resident/Admin)
-- OTPs expire after 10 minutes (TTL index auto-cleanup)
-- Rate limiting: 30 req/15min for auth, 1000 req/15min for API
-- Phone number changes require OTP verification
-- JWT tokens expire after 7 days
+See [SECURITY.md](./SECURITY.md).
 
 ## License
 
-MIT
+MIT. See [LICENSE](./LICENSE).
+EOF

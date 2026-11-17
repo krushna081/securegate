@@ -6,14 +6,15 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import CustomButton from '../../components/CustomButton';
-import { authService } from '../../services/authService';
+import { Ionicons } from '@expo/vector-icons';
+import authService from '../../services/authService';
 import {
   ProfileHeaderSkeleton, ProfileCardSkeleton,
 } from '../../components/SkeletonLoader';
 
 const ProfileScreen = () => {
   const { colors, shadows } = useTheme();
-  const { user, logout, login } = useAuth();
+  const { user, logout, login, deleteAccount } = useAuth();
   const navigation = useNavigation<any>();
   const [editing, setEditing] = useState(false);
   const [editPhone, setEditPhone] = useState(user?.phoneNumber || '');
@@ -29,7 +30,7 @@ const ProfileScreen = () => {
         try {
           const { user: freshUser } = await authService.getProfile();
           if (freshUser && JSON.stringify(freshUser) !== JSON.stringify(user)) {
-            const token = await import('../../services/api').then(m => m.getToken());
+            const token = await import('../../services/tokenStorage').then(m => m.getToken());
             if (token) login(freshUser, token);
           }
         } catch {}
@@ -65,11 +66,11 @@ const ProfileScreen = () => {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { backgroundColor: colors.primary }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backIcon}>←</Text>
+          <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Profile</Text>
         <TouchableOpacity onPress={() => navigation.navigate('Settings')}>
-          <Text style={styles.settingsIcon}>⚙️</Text>
+          <Ionicons name="settings-outline" size={22} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
 
@@ -166,7 +167,7 @@ const ProfileScreen = () => {
           style={[styles.menuCard, { backgroundColor: colors.card }, shadows.small]}
           onPress={() => navigation.navigate('EditProfile')}
         >
-          <Text style={styles.menuIcon}>✏️</Text>
+          <Ionicons name="create-outline" size={22} color={colors.primary} />
           <View style={styles.menuTextWrap}>
             <Text style={[styles.menuTitle, { color: colors.text }]}>Edit Profile</Text>
             <Text style={[styles.menuSub, { color: colors.textLight }]}>
@@ -181,7 +182,7 @@ const ProfileScreen = () => {
             style={[styles.menuCard, { backgroundColor: colors.card }, shadows.small]}
             onPress={() => navigation.navigate('PreApproval')}
           >
-            <Text style={styles.menuIcon}>📅</Text>
+            <Ionicons name="calendar-outline" size={22} color={colors.primary} />
             <View style={styles.menuTextWrap}>
               <Text style={[styles.menuTitle, { color: colors.text }]}>Pre-Approved Visitors</Text>
               <Text style={[styles.menuSub, { color: colors.textLight }]}>
@@ -194,13 +195,38 @@ const ProfileScreen = () => {
 
         <View style={styles.logoutSection}>
           <CustomButton
+            title="Delete account"
+            onPress={() => {
+              Alert.alert(
+                'Delete account',
+                'This will anonymize your profile and sign you out. Gate records may be retained for security.',
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  {
+                    text: 'Delete',
+                    style: 'destructive',
+                    onPress: async () => {
+                      try {
+                        await deleteAccount();
+                      } catch (err: any) {
+                        Alert.alert('Error', err.message || 'Failed to delete account');
+                      }
+                    },
+                  },
+                ],
+              );
+            }}
+            variant="danger"
+            style={{ marginBottom: 12 }}
+          />
+          <CustomButton
             title="Logout"
             onPress={handleLogout}
             variant="outline"
           />
         </View>
 
-        <Text style={[styles.version, { color: colors.textMuted }]}>SecureGate v1.0.0</Text>
+        <Text style={[styles.version, { color: colors.textMuted }]}>SecureGate v2.0.0</Text>
         </> )}
       </ScrollView>
     </View>

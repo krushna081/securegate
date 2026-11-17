@@ -4,7 +4,7 @@ import {
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTheme } from '../../context/ThemeContext';
-import { authService } from '../../services/authService';
+import authService from '../../services/authService';
 import { useAuth } from '../../context/AuthContext';
 import CustomButton from '../../components/CustomButton';
 
@@ -16,8 +16,20 @@ const OtpVerificationScreen = () => {
   const navigation = useNavigation<any>();
   const route = useRoute();
   const { login } = useAuth();
-  const params = route.params as { email: string; devOtp?: string; justCreated?: boolean };
-  const { email, devOtp, justCreated } = params;
+  const params = route.params as {
+    email: string;
+    devOtp?: string;
+    mode?: 'login' | 'register';
+    pending?: {
+      fullName: string;
+      phoneNumber: string;
+      role: 'resident' | 'guard';
+      flatNumber?: string;
+      blockName?: string;
+      inviteCode?: string;
+    };
+  };
+  const { email, devOtp, mode, pending } = params;
 
   useEffect(() => {
     if (devOtp) setOtp(devOtp);
@@ -38,7 +50,28 @@ const OtpVerificationScreen = () => {
     setLoading(true);
     try {
       const data = await authService.verifyOtp(email, otp);
-      login(data.user, data.token);
+
+      if (mode === 'register' && pending) {
+        if (!data.registrationToken) {
+          throw new Error('Registration verification failed');
+        }
+        const created = await authService.createAccount({
+          registrationToken: data.registrationToken,
+          fullName: pending.fullName,
+          phoneNumber: pending.phoneNumber,
+          role: pending.role,
+          flatNumber: pending.flatNumber,
+          blockName: pending.blockName,
+          inviteCode: pending.inviteCode,
+        });
+        await login(created.user!, created.token!);
+      } else {
+        if (!data.user || !data.token) {
+          throw new Error('Sign in failed');
+        }
+        await login(data.user, data.token);
+      }
+
     } catch (error: any) {
       const msg = error.message || '';
       if (msg.includes('Network') || msg.includes('connect')) {
@@ -74,8 +107,8 @@ const OtpVerificationScreen = () => {
 
       <Text style={[styles.title, { color: colors.primary }]}>Verify OTP</Text>
       <Text style={[styles.subtitle, { color: colors.textLight }]}>
-        {justCreated
-          ? 'Account created! Verify your email to sign in'
+        {mode === 'register'
+          ? 'Verify your email to finish creating your account'
           : 'Enter the code sent to your email'}
       </Text>
       <Text style={[styles.email, { color: colors.primary }]}>{email}</Text>

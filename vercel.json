@@ -1,5 +1,5 @@
 {
-  "buildCommand": "cd backend && npm install && npm run build",
+  "buildCommand": "cd backend && npm ci && npm run build",
   "outputDirectory": "backend/dist",
   "functions": {
     "backend/dist/server.js": {
@@ -7,6 +7,9 @@
     }
   },
   "rewrites": [
-    { "source": "/(.*)", "destination": "/backend/dist/server.js" }
+    {
+      "source": "/(.*)",
+      "destination": "/backend/dist/server.js"
+    }
   ]
 }

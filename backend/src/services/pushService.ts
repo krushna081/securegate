@@ -29,8 +29,7 @@ export const sendPushNotification = async (message: PushMessage) => {
           },
         },
         (res) => {
-          let data = '';
-          res.on('data', (chunk) => { data += chunk; });
+          res.on('data', () => {});
           res.on('end', () => resolve());
         },
       );
@@ -48,26 +47,20 @@ export const notifyResidentAboutVisitor = async (
   visitorName: string,
   visitorId: string,
   flatNumber: string,
-  photoUrl?: string,
 ): Promise<void> => {
   try {
     const resident = await User.findById(residentId);
     if (!resident || !resident.pushToken) return;
 
-    const notificationBody = photoUrl
-      ? `${visitorName} is here for Flat ${flatNumber} — tap to see photo`
-      : `${visitorName} is here for Flat ${flatNumber}`;
-
     await sendPushNotification({
       to: resident.pushToken,
-      title: '🚪 New Visitor at Gate',
-      body: notificationBody,
+      title: 'New visitor at gate',
+      body: `${visitorName} is here for Flat ${flatNumber}`,
       data: {
         type: 'visitor-approval',
         visitorId,
         visitorName,
         flatNumber,
-        photoUrl,
       },
       categoryId: 'visitor-approval',
       sound: 'default',

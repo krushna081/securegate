@@ -1,149 +1,126 @@
 import { Request, Response } from 'express';
 import User from '../models/User';
-import Otp from '../models/Otp';
-import Flat from '../models/Flat';
-import Society from '../models/Society';
-import jwt from 'jsonwebtoken';
-import { sendOtpEmail } from '../services/emailService';
+import { env } from '../config/env';
+import { AuthRequest } from '../middleware/authMiddleware';
+import { AppError } from '../middleware/errorHandler';
+import { issueOtp, verifyIssuedOtp } from '../services/otpService';
+import {
+  RegistrationTokenPayload,
+  signAuthToken,
+  signRegistrationToken,
+  verifyToken,
+} from '../utils/tokens';
+import { normalizeEmail, safeCompare } from '../utils/otp';
+import { assignResidentFlat, getDefaultSociety } from '../utils/society';
+import { toPublicUser } from '../utils/user';
+import { CreateAccountInput } from '../validation/schemas';
 
-export const sendOtp = async (req: Request, res: Response) => {
-  try {
-    const { email } = req.body;
-    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+export const sendOtp = async (req: Request, res: Response): Promise<void> => {
+  const { email } = req.body as { email: string };
+  const result = await issueOtp(email, 'auth');
 
-    await Otp.findOneAndDelete({ email });
-    await Otp.create({ email, otp: otpCode, expiresAt });
-
-    await sendOtpEmail(email, otpCode);
-
-    if (!process.env.RESEND_API_KEY || process.env.RESEND_API_KEY === 're_XXXXXXXXXXXXXXXXXXXXXXXX') {
-      res.json({ message: 'OTP sent (dev mode)', devOtp: otpCode });
-      return;
-    }
-
-    res.json({ message: 'OTP sent successfully' });
-  } catch (error) {
-    console.error('sendOtp error:', error);
-    res.status(500).json({ message: 'Failed to send OTP' });
-  }
+  res.json({
+    message: 'If that email can receive mail, a verification code has been sent.',
+    ...(result.devOtp ? { devOtp: result.devOtp } : {}),
+  });
 };
 
-export const verifyOtp = async (req: Request, res: Response) => {
-  try {
-    const { email, otp } = req.body;
-    const otpRecord = await Otp.findOne({ email: email.toLowerCase() });
+export const verifyOtp = async (req: Request, res: Response): Promise<void> => {
+  const { email, otp } = req.body as { email: string; otp: string };
+  const normalized = normalizeEmail(email);
 
-    if (!otpRecord) {
-      return res.status(400).json({ message: 'Invalid OTP' });
-    }
+  await verifyIssuedOtp(normalized, otp, 'auth');
 
-    if (otpRecord.otp !== otp || otpRecord.expiresAt < new Date()) {
-      return res.status(400).json({ message: 'Invalid or expired OTP' });
-    }
-
-    let user = await User.findOne({ email: email.toLowerCase() })
-      .populate('societyId', 'name address')
-      .populate('flatId', 'flatNumber blockName');
-
-    if (!user) {
-      await Otp.deleteOne({ email: email.toLowerCase() });
-      return res.status(400).json({ message: 'No account found. Please create an account first.' });
-    }
-
-    await Otp.deleteOne({ email: email.toLowerCase() });
-
-    const token = jwt.sign(
-      { userId: user._id, role: user.role },
-      process.env.JWT_SECRET!,
-      { expiresIn: '7d' }
-    );
-
+  const user = await User.findOne({ email: normalized });
+  if (!user) {
     res.json({
-      token,
-      user: {
-        id: user._id,
-        email: user.email,
-        fullName: user.fullName,
-        phoneNumber: user.phoneNumber,
-        phoneNumber2: user.phoneNumber2,
-        role: user.role,
-        societyId: user.societyId,
-        flatId: user.flatId,
-      },
+      isNewUser: true,
+      registrationToken: signRegistrationToken(normalized),
     });
-  } catch (error) {
-    console.error('verifyOtp error:', error);
-    res.status(500).json({ message: 'Verification failed' });
+    return;
   }
+
+  if (!user.isActive) {
+    throw new AppError('This account has been deactivated.', 403);
+  }
+
+  res.json({
+    isNewUser: false,
+    token: signAuthToken(user),
+    user: toPublicUser(user),
+  });
 };
 
-export const createAccount = async (req: Request, res: Response) => {
+export const createAccount = async (req: Request, res: Response): Promise<void> => {
+  const input = req.body as CreateAccountInput;
+
+  let registration: RegistrationTokenPayload;
   try {
-    const { fullName, email, phoneNumber, role, flatNumber, blockName } = req.body;
-    let user = await User.findOne({ email: email.toLowerCase() });
-
-    if (user) {
-      return res.status(400).json({ message: 'User already exists' });
-    }
-
-    if (!phoneNumber || !phoneNumber.toString().trim()) {
-      return res.status(400).json({ message: 'Phone number is required' });
-    }
-
-    if (role === 'resident') {
-      if (!flatNumber || !flatNumber.toString().trim()) {
-        return res.status(400).json({ message: 'Flat number is required for residents' });
-      }
-      if (!blockName || !blockName.toString().trim()) {
-        return res.status(400).json({ message: 'Block name is required for residents' });
-      }
-    }
-
-    let flatId: string | undefined;
-
-    if (flatNumber) {
-      let society = await Society.findOne({});
-      if (!society) {
-        society = await Society.create({ name: 'Default Society', address: 'Main Address' });
-      }
-
-      let flat = await Flat.findOne({ flatNumber: flatNumber.toString(), blockName: blockName || 'A' });
-      if (flat) {
-        if (flat.residentId) {
-          return res.status(400).json({ message: `Flat ${flatNumber} is already assigned to another resident` });
-        }
-        flatId = flat._id.toString();
-      } else {
-        flat = await Flat.create({
-          societyId: society._id,
-          flatNumber: flatNumber.toString(),
-          blockName: blockName || 'A',
-        });
-        flatId = flat._id.toString();
-      }
-    }
-
-    user = await User.create({
-      fullName,
-      email: email.toLowerCase(),
-      phoneNumber: phoneNumber.toString().trim(),
-      role: role || 'resident',
-      flatId: flatId,
-      societyId: flatId ? (await Flat.findById(flatId))?.societyId : undefined,
-    });
-
-    if (flatId) {
-      await Flat.findByIdAndUpdate(flatId, { residentId: user._id });
-    }
-
-    const populated = await User.findById(user._id)
-      .populate('flatId', 'flatNumber blockName')
-      .populate('societyId', 'name');
-
-    res.json({ message: 'Account created. Please login.', user: populated });
-  } catch (error) {
-    console.error('createAccount error:', error);
-    res.status(500).json({ message: 'Failed to create account' });
+    registration = verifyToken<RegistrationTokenPayload>(input.registrationToken);
+  } catch {
+    throw new AppError('Registration verification expired. Request a new code.', 400);
   }
+
+  if (registration.purpose !== 'registration' || !registration.email) {
+    throw new AppError('Invalid registration token.', 400);
+  }
+
+  const email = normalizeEmail(registration.email);
+  const existing = await User.findOne({ email });
+  if (existing) {
+    throw new AppError('An account already exists for this email. Sign in instead.', 409);
+  }
+
+  const role = input.role;
+  if (role === 'guard') {
+    if (
+      !env.guardInviteCode ||
+      !input.inviteCode ||
+      !safeCompare(input.inviteCode, env.guardInviteCode)
+    ) {
+      throw new AppError(
+        'Guard registration is invite-only. Ask your society admin for an invite code.',
+        403,
+      );
+    }
+  }
+
+  const society = await getDefaultSociety();
+  const user = await User.create({
+    email,
+    fullName: input.fullName,
+    phoneNumber: input.phoneNumber,
+    role,
+    societyId: society._id,
+    tokenVersion: 0,
+    isActive: true,
+  });
+
+  if (role === 'resident') {
+    try {
+      const flat = await assignResidentFlat(
+        society._id,
+        input.flatNumber!,
+        input.blockName!,
+        user._id,
+      );
+      user.flatId = flat._id;
+      await user.save();
+    } catch (error) {
+      await User.deleteOne({ _id: user._id });
+      throw error;
+    }
+  }
+
+  res.status(201).json({
+    token: signAuthToken(user),
+    user: toPublicUser(user),
+  });
+};
+
+export const logout = async (req: AuthRequest, res: Response): Promise<void> => {
+  const user = req.user!;
+  user.tokenVersion = (user.tokenVersion ?? 0) + 1;
+  await user.save();
+  res.json({ message: 'Signed out on all devices.' });
 };

@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
 import { User } from '../types';
-import { authService } from '../services/authService';
-import { getToken, removeToken } from '../services/api';
+import authService from '../services/authService';
+import { onUnauthorized } from '../services/authEvents';
+import { getToken, setToken, removeToken } from '../services/tokenStorage';
 import {
   getExpoPushToken,
   registerPushTokenWithBackend,
@@ -51,8 +52,9 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
 }
 
 interface AuthContextType extends AuthState {
-  login: (user: User, token: string) => void;
-  logout: () => void;
+  login: (user: User, token: string) => Promise<void>;
+  logout: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
   markNotificationPermissionAsked: () => void;
   setupPushNotifications: () => Promise<void>;
   performCatchUp: () => Promise<number>;
@@ -60,8 +62,9 @@ interface AuthContextType extends AuthState {
 
 const AuthContext = createContext<AuthContextType>({
   ...initialState,
-  login: () => {},
-  logout: () => {},
+  login: async () => {},
+  logout: async () => {},
+  deleteAccount: async () => {},
   markNotificationPermissionAsked: () => {},
   setupPushNotifications: async () => {},
   performCatchUp: async () => 0,
@@ -72,6 +75,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     restoreToken();
+
+    const unsubscribe = onUnauthorized(() => {
+      removeToken().catch(() => {});
+      dispatch({ type: 'LOGOUT' });
+    });
+
+    return unsubscribe;
   }, []);
 
   async function restoreToken() {
@@ -95,12 +105,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const login = (user: User, token: string) => {
+  const login = async (user: User, token: string) => {
+    await setToken(token);
     dispatch({ type: 'LOGIN', user, token });
   };
 
   const logout = async () => {
+    try {
+      await unregisterPushTokenFromBackend();
+    } catch {}
     await authService.logout();
+    await removeToken();
+    dispatch({ type: 'LOGOUT' });
+  };
+
+  const deleteAccount = async () => {
+    await authService.deleteAccount();
+    await removeToken();
     dispatch({ type: 'LOGOUT' });
   };
 
@@ -130,7 +151,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ ...state, login, logout, markNotificationPermissionAsked, setupPushNotifications, performCatchUp }}>
+    <AuthContext.Provider
+      value={{
+        ...state,
+        login,
+        logout,
+        deleteAccount,
+        markNotificationPermissionAsked,
+        setupPushNotifications,
+        performCatchUp,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

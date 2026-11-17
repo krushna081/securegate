@@ -9,19 +9,20 @@ export interface IMeeting extends Document {
   location?: string;
   createdBy: mongoose.Types.ObjectId;
   createdAt: Date;
+  updatedAt: Date;
 }
 
 const meetingSchema = new Schema<IMeeting>(
   {
     societyId: { type: Schema.Types.ObjectId, ref: 'Society', required: true },
-    title: { type: String, required: true, trim: true },
-    description: { type: String, trim: true },
+    title: { type: String, required: true, trim: true, maxlength: 100 },
+    description: { type: String, trim: true, maxlength: 500 },
     date: { type: Date, required: true },
-    time: { type: String, required: true },
-    location: { type: String, trim: true },
+    time: { type: String, required: true, trim: true, maxlength: 20 },
+    location: { type: String, trim: true, maxlength: 100 },
     createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 meetingSchema.index({ societyId: 1, date: -1 });

@@ -5,8 +5,9 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../context/ThemeContext';
-import { authService } from '../../services/authService';
+import authService from '../../services/authService';
 import CustomButton from '../../components/CustomButton';
+import { Ionicons } from '@expo/vector-icons';
 
 const SignInScreen = () => {
   const { colors, shadows } = useTheme();
@@ -53,7 +54,7 @@ const SignInScreen = () => {
       >
         <View style={styles.headerSection}>
           <View style={[styles.logoCircle, { backgroundColor: colors.primaryLight }]}>
-            <Text style={styles.shieldIcon}>🛡️</Text>
+            <Ionicons name="shield-checkmark-outline" size={40} color={colors.primary} />
           </View>
           <Text style={[styles.appName, { color: colors.primary }]}>SecureGate</Text>
           <Text style={[styles.tagline, { color: colors.textLight }]}>

@@ -1,18 +1,33 @@
 import mongoose from 'mongoose';
+import { env } from './env';
 
-let connected = false;
+let cachedConnection: typeof mongoose | null = null;
+let connectionPromise: Promise<typeof mongoose> | null = null;
 
-const connectDB = async () => {
-  if (connected) return;
-  try {
-    const uri = process.env.MONGO_URI || process.env.MONGODB_URI || 'mongodb://localhost:27017/securegate';
-    await mongoose.connect(uri);
-    connected = true;
-    console.log(`MongoDB Connected`);
-  } catch (error) {
-    console.error('MongoDB Connection Error:', error);
-    if (!process.env.VERCEL) process.exit(1);
-  }
+const connectDB = async (): Promise<typeof mongoose> => {
+  if (cachedConnection) return cachedConnection;
+  if (connectionPromise) return connectionPromise;
+
+  mongoose.set('sanitizeFilter', true);
+  mongoose.set('strictQuery', true);
+
+  connectionPromise = mongoose
+    .connect(env.mongoUri, {
+      serverSelectionTimeoutMS: 10000,
+    })
+    .then((connection) => {
+      cachedConnection = connection;
+      console.log('MongoDB connected');
+      return connection;
+    })
+    .catch((error) => {
+      connectionPromise = null;
+      console.error('MongoDB connection error:', error instanceof Error ? error.message : error);
+      if (!process.env.VERCEL) process.exit(1);
+      throw error;
+    });
+
+  return connectionPromise;
 };
 
 export default connectDB;

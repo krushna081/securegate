@@ -8,29 +8,30 @@ import UpcomingVisitorsScreen from '../screens/guard/UpcomingVisitorsScreen';
 import VisitorsListScreen from '../screens/guard/VisitorsListScreen';
 import ProfileScreen from '../screens/guard/ProfileScreen';
 import { useTheme } from '../context/ThemeContext';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 
 const Tab = createBottomTabNavigator();
 
 const tabsByRole: Record<string, Array<{ name: string; component: any; label: string; icon: string }>> = {
   guard: [
-    { name: 'Dashboard', component: GuardDashboardScreen, label: 'Dashboard', icon: '🏠' },
-    { name: 'LogNewVisitor', component: LogNewVisitorScreen, label: 'Log Visitor', icon: '➕' },
-    { name: 'UpcomingVisitors', component: UpcomingVisitorsScreen, label: 'Upcoming', icon: '📅' },
-    { name: 'VisitorsList', component: VisitorsListScreen, label: 'History', icon: '📋' },
-    { name: 'Profile', component: ProfileScreen, label: 'Profile', icon: '👤' },
+    { name: 'Dashboard', component: GuardDashboardScreen, label: 'Dashboard', icon: 'home-outline' },
+    { name: 'LogNewVisitor', component: LogNewVisitorScreen, label: 'Log Visitor', icon: 'add-circle-outline' },
+    { name: 'UpcomingVisitors', component: UpcomingVisitorsScreen, label: 'Upcoming', icon: 'calendar-outline' },
+    { name: 'VisitorsList', component: VisitorsListScreen, label: 'History', icon: 'time-outline' },
+    { name: 'Profile', component: ProfileScreen, label: 'Profile', icon: 'person-outline' },
   ],
   resident: [
-    { name: 'Dashboard', component: GuardDashboardScreen, label: 'Dashboard', icon: '🏠' },
-    { name: 'UpcomingVisitors', component: UpcomingVisitorsScreen, label: 'Upcoming', icon: '📅' },
-    { name: 'VisitorsList', component: VisitorsListScreen, label: 'History', icon: '📋' },
-    { name: 'Profile', component: ProfileScreen, label: 'Profile', icon: '👤' },
+    { name: 'Dashboard', component: GuardDashboardScreen, label: 'Dashboard', icon: 'home-outline' },
+    { name: 'UpcomingVisitors', component: UpcomingVisitorsScreen, label: 'Upcoming', icon: 'calendar-outline' },
+    { name: 'VisitorsList', component: VisitorsListScreen, label: 'History', icon: 'time-outline' },
+    { name: 'Profile', component: ProfileScreen, label: 'Profile', icon: 'person-outline' },
   ],
   admin: [
-    { name: 'Dashboard', component: GuardDashboardScreen, label: 'Dashboard', icon: '🏠' },
-    { name: 'LogNewVisitor', component: LogNewVisitorScreen, label: 'Log Visitor', icon: '➕' },
-    { name: 'VisitorsList', component: VisitorsListScreen, label: 'History', icon: '📋' },
-    { name: 'Profile', component: ProfileScreen, label: 'Profile', icon: '👤' },
+    { name: 'Dashboard', component: GuardDashboardScreen, label: 'Dashboard', icon: 'home-outline' },
+    { name: 'LogNewVisitor', component: LogNewVisitorScreen, label: 'Log Visitor', icon: 'add-circle-outline' },
+    { name: 'VisitorsList', component: VisitorsListScreen, label: 'History', icon: 'time-outline' },
+    { name: 'Profile', component: ProfileScreen, label: 'Profile', icon: 'person-outline' },
   ],
 };
 
@@ -66,9 +67,11 @@ const TabBar = ({ state, descriptors, navigation: tabNavigation }: any) => {
             activeOpacity={0.7}
           >
             <View style={[styles.iconWrapper, isFocused && { backgroundColor: colors.primaryLight }]}>
-              <Text style={[styles.tabIcon, isFocused && { opacity: 1 }]}>
-                {config.icon}
-              </Text>
+              <Ionicons
+                name={config.icon as any}
+                size={22}
+                color={isFocused ? colors.primary : colors.tabInactive}
+              />
             </View>
             <Text style={[styles.tabLabel, { color: colors.tabInactive }, isFocused && { color: colors.primary, fontWeight: '700' }]}>
               {config.label}

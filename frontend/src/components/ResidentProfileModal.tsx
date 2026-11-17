@@ -4,6 +4,7 @@ import {
   Linking, Platform, ScrollView,
 } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
+import { Ionicons } from '@expo/vector-icons';
 import { User } from '../types';
 
 interface Props {
@@ -28,7 +29,7 @@ const ResidentProfileModal = ({ visible, resident, onClose }: Props) => {
         <ScrollView contentContainerStyle={styles.scrollCenter} keyboardShouldPersistTaps="handled">
           <View style={[styles.card, { backgroundColor: colors.card }]}>
             <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
-              <Text style={[styles.closeBtnText, { color: colors.textMuted }]}>✕</Text>
+              <Ionicons name="close" size={22} color={colors.textMuted} />
             </TouchableOpacity>
 
             <View style={[styles.avatar, { backgroundColor: colors.primaryLight }]}>

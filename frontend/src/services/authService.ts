@@ -1,73 +1,88 @@
-import api, { setToken } from './api';
+import api from './api';
 import { User } from '../types';
 
-interface SendOtpResponse {
-  message: string;
+interface AuthResponse {
+  token?: string;
+  user?: User;
+  isNewUser?: boolean;
+  registrationToken?: string;
+  verified?: boolean;
+  verificationToken?: string;
   devOtp?: string;
 }
 
-interface VerifyOtpResponse {
-  token: string;
-  user: User;
-}
-
-interface ProfileOtpResponse {
-  message: string;
-  devOtp?: string;
-}
-
-interface VerifyProfileOtpResponse {
-  verified: boolean;
-  phoneVerifiedToken: string;
-}
-
-export const authService = {
-  sendOtp: async (email: string): Promise<SendOtpResponse> => {
-    const { data } = await api.post<SendOtpResponse>('/auth/send-otp', { email });
+const authService = {
+  async sendOtp(email: string): Promise<{ devOtp?: string; message?: string }> {
+    const { data } = await api.post('/auth/send-otp', { email });
     return data;
   },
 
-  verifyOtp: async (email: string, otp: string): Promise<VerifyOtpResponse> => {
-    const { data } = await api.post<VerifyOtpResponse>('/auth/verify-otp', { email, otp });
-    await setToken(data.token);
+  async verifyOtp(email: string, otp: string): Promise<AuthResponse> {
+    const { data } = await api.post('/auth/verify-otp', { email, otp });
     return data;
   },
 
-  createAccount: async (fullName: string, email: string, role: string = 'resident', phoneNumber?: string, flatNumber?: string, blockName?: string) => {
-    const { data } = await api.post('/auth/create-account', { fullName, email, role, phoneNumber, flatNumber, blockName });
+  async createAccount(payload: {
+    registrationToken: string;
+    fullName: string;
+    phoneNumber: string;
+    role: 'resident' | 'guard';
+    inviteCode?: string;
+    flatNumber?: string;
+    blockName?: string;
+  }): Promise<AuthResponse> {
+    const { data } = await api.post('/auth/create-account', payload);
     return data;
   },
 
-  getProfile: async (): Promise<{ user: User }> => {
-    const { data } = await api.get<{ user: User }>('/users/profile');
+  async logout(): Promise<void> {
+    try {
+      await api.post('/auth/logout');
+    } catch {
+      // Best effort.
+    }
+  },
+
+  async deleteAccount(): Promise<void> {
+    await api.delete('/users/me');
+  },
+
+  async getProfile(): Promise<{ user: User }> {
+    const { data } = await api.get('/users/profile');
     return data;
   },
 
-  updateProfile: async (updates: {
+  async updateProfile(payload: {
     fullName?: string;
     phoneNumber?: string;
     phoneNumber2?: string;
-    photoUrl?: string;
+    photoUrl?: string | null;
     flatNumber?: string;
     blockName?: string;
     gateNumber?: string;
-    phoneVerifiedToken?: string;
-  }): Promise<{ user: User }> => {
-    const { data } = await api.patch<{ user: User }>('/users/profile', updates);
+    verificationToken?: string;
+  }): Promise<{ user: User }> {
+    const { data } = await api.patch('/users/profile', payload);
     return data;
   },
 
-  sendProfileOtp: async (): Promise<ProfileOtpResponse> => {
-    const { data } = await api.post<ProfileOtpResponse>('/users/send-otp');
+  async sendProfileOtp(): Promise<{ devOtp?: string; message?: string }> {
+    const { data } = await api.post('/users/send-otp');
     return data;
   },
 
-  verifyProfileOtp: async (otp: string): Promise<VerifyProfileOtpResponse> => {
-    const { data } = await api.post<VerifyProfileOtpResponse>('/users/verify-otp', { otp });
+  async verifyProfileOtp(otp: string): Promise<{ verified: boolean; verificationToken: string }> {
+    const { data } = await api.post('/users/verify-otp', { otp });
     return data;
   },
 
-  logout: async () => {
-    await setToken(null);
+  async registerPushToken(pushToken: string): Promise<void> {
+    await api.post('/users/push-token', { pushToken });
+  },
+
+  async unregisterPushToken(): Promise<void> {
+    await api.delete('/users/push-token');
   },
 };
+
+export default authService;

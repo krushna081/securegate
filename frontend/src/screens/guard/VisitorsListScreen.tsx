@@ -58,8 +58,7 @@ const VisitorsListScreen = () => {
   const fetchVisitors = async () => {
     loadStart.current = Date.now();
     try {
-      const params = user?.role === 'resident' ? { scope: 'society' } : {};
-      const data = await visitorService.getAll(params);
+      const data = await visitorService.getAll({ limit: 50 });
       setVisitors(data.visitors || []);
     } catch {
       setVisitors([]);

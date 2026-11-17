@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { AppState, AppStateStatus, Platform } from 'react-native';
+import { AppState, AppStateStatus } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import * as SplashScreen from 'expo-splash-screen';
@@ -17,39 +17,11 @@ import {
 
 SplashScreen.preventAutoHideAsync();
 
-const BACKGROUND_NOTIF_ID = 'securegate-running';
-
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: { retry: 2, staleTime: 30 * 1000, refetchOnWindowFocus: false },
   },
 });
-
-async function showBackgroundNotification() {
-  if (Platform.OS !== 'android') return;
-  try {
-    await Notifications.scheduleNotificationAsync({
-      identifier: BACKGROUND_NOTIF_ID,
-      content: {
-        title: 'SecureGate',
-        body: 'App is running — monitoring visitors',
-        data: { type: 'background' },
-        priority: Notifications.AndroidNotificationPriority.LOW,
-        sound: false,
-        vibrate: [0],
-        autoDismiss: false,
-        ...(Platform.OS === 'android' ? { ongoing: true } : {}),
-      } as Notifications.NotificationContentInput,
-      trigger: null,
-    });
-  } catch {}
-}
-
-async function cancelBackgroundNotification() {
-  try {
-    await Notifications.cancelScheduledNotificationAsync(BACKGROUND_NOTIF_ID);
-  } catch {}
-}
 
 export default function App() {
   const responseListener = useRef<any>(null);
@@ -76,23 +48,6 @@ export default function App() {
         responseListener.current.remove();
       }
     };
-  }, []);
-
-  useEffect(() => {
-    const subscription = AppState.addEventListener('change', async (nextState: AppStateStatus) => {
-      const prevState = appStateRef.current;
-      appStateRef.current = nextState;
-
-      if (prevState === 'active' && (nextState === 'background' || nextState === 'inactive')) {
-        await showBackgroundNotification();
-      }
-
-      if ((prevState === 'background' || prevState === 'inactive') && nextState === 'active') {
-        await cancelBackgroundNotification();
-      }
-    });
-
-    return () => subscription.remove();
   }, []);
 
   return (

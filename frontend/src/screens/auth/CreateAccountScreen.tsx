@@ -6,8 +6,9 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../context/ThemeContext';
-import { authService } from '../../services/authService';
+import authService from '../../services/authService';
 import CustomButton from '../../components/CustomButton';
+import { Ionicons } from '@expo/vector-icons';
 
 const ROLES = [
   { label: 'Resident', value: 'resident', icon: '👤' },
@@ -22,6 +23,7 @@ const CreateAccountScreen = () => {
   const [flatNumber, setFlatNumber] = useState('');
   const [blockName, setBlockName] = useState('');
   const [role, setRole] = useState('resident');
+  const [inviteCode, setInviteCode] = useState('');
   const [loading, setLoading] = useState(false);
   const navigation = useNavigation<any>();
 
@@ -50,21 +52,20 @@ const CreateAccountScreen = () => {
     }
     setLoading(true);
     try {
-      await authService.createAccount(
-        fullName.trim(),
-        email.trim(),
-        role,
-        phoneNumber.trim(),
-        flatNumber.trim() || undefined,
-        blockName.trim() || undefined
-      );
-
       const otpData = await authService.sendOtp(email.trim());
 
       navigation.replace('OtpVerification', {
         email: email.trim(),
         devOtp: otpData.devOtp,
-        justCreated: true,
+        mode: 'register',
+        pending: {
+          fullName: fullName.trim(),
+          phoneNumber: phoneNumber.trim(),
+          role,
+          flatNumber: flatNumber.trim() || undefined,
+          blockName: blockName.trim() || undefined,
+          inviteCode: inviteCode.trim() || undefined,
+        },
       });
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Failed to create account');
@@ -87,7 +88,7 @@ const CreateAccountScreen = () => {
         </TouchableOpacity>
 
         <View style={styles.headerSection}>
-          <Text style={styles.shieldIcon}>🛡️</Text>
+          <Ionicons name="shield-checkmark-outline" size={40} color={colors.primary} />
           <Text style={[styles.title, { color: colors.primary }]}>Create Account</Text>
           <Text style={[styles.subtitle, { color: colors.textLight }]}>Join SecureGate community</Text>
         </View>

@@ -2,8 +2,24 @@ import api from './api';
 import { Visitor, PreApproval } from '../types';
 
 export const visitorService = {
-  getAll: async (params?: { status?: string; flatId?: string; scope?: string }): Promise<{ visitors: Visitor[] }> => {
+  getAll: async (params?: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    flatId?: string;
+  }): Promise<{ visitors: Visitor[]; total: number; page: number; pages: number }> => {
     const { data } = await api.get('/visitors', { params });
+    return data;
+  },
+
+  getStats: async (): Promise<{
+    total: number;
+    pending: number;
+    approvedToday: number;
+    rejectedToday: number;
+    today: number;
+  }> => {
+    const { data } = await api.get('/visitors/stats');
     return data;
   },
 
@@ -71,13 +87,13 @@ export const userService = {
     return data;
   },
 
-  getAllUsers: async (params?: { role?: string; societyId?: string }) => {
+  getAllUsers: async (params?: { role?: string; page?: number; limit?: number }) => {
     const { data } = await api.get('/users/all', { params });
     return data;
   },
 
-  getFlats: async (societyId?: string) => {
-    const { data } = await api.get('/users/flats', { params: { societyId } });
+  getFlats: async () => {
+    const { data } = await api.get('/users/flats');
     return data;
   },
 

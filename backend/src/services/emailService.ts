@@ -1,33 +1,40 @@
-let resend: any = null;
+import { Resend } from 'resend';
+import { env } from '../config/env';
 
-try {
-  if (process.env.RESEND_API_KEY && process.env.RESEND_API_KEY !== 're_XXXXXXXXXXXXXXXXXXXXXXXX') {
-    const { Resend } = require('resend');
-    resend = new Resend(process.env.RESEND_API_KEY);
-  }
-} catch {
-  console.warn('Resend not configured. Email sending disabled.');
-}
+const resend = env.resendApiKey ? new Resend(env.resendApiKey) : null;
 
-export const sendOtpEmail = async (email: string, otp: string) => {
-  if (!resend) {
-    console.log(`[DEV] OTP for ${email}: ${otp}`);
-    return;
-  }
+export async function sendOtpEmail(
+  email: string,
+  otp: string,
+  purpose: 'auth' | 'profile',
+): Promise<boolean> {
+  if (!resend) return false;
 
-  await resend.emails.send({
-    from: 'SecureGate <no-reply@securegate.app>',
+  const subject =
+    purpose === 'auth'
+      ? 'Your SecureGate sign-in code'
+      : 'Confirm your SecureGate profile change';
+
+  const { error } = await resend.emails.send({
+    from: env.emailFrom,
     to: email,
-    subject: 'Your SecureGate Login OTP',
+    subject,
     html: `
-      <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto;">
-        <h2>SecureGate OTP Verification</h2>
-        <p>Your one-time password is:</p>
-        <h1 style="font-size: 36px; letter-spacing: 8px; text-align: center; background: #f0f0f0; padding: 16px; border-radius: 8px;">
+      <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; color: #0f2742;">
+        <h2 style="margin-bottom: 8px;">SecureGate</h2>
+        <p>Your one-time verification code is:</p>
+        <div style="font-size: 34px; font-weight: 700; letter-spacing: 10px; text-align: center; background: #f1f5f9; padding: 18px; border-radius: 12px; margin: 20px 0;">
           ${otp}
-        </h1>
-        <p>This OTP expires in 10 minutes.</p>
+        </div>
+        <p style="color: #52657a;">This code expires in 10 minutes. If you did not request it, you can ignore this email.</p>
       </div>
     `,
   });
-};
+
+  if (error) {
+    console.error('Resend delivery failed:', error.message);
+    return false;
+  }
+
+  return true;
+}

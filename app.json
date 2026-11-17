@@ -2,9 +2,9 @@
   "expo": {
     "name": "SecureGate",
     "slug": "securegate",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "orientation": "portrait",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./frontend/src/assets/icon.png",
       "backgroundColor": "#6B46C1",
@@ -13,12 +13,6 @@
     "plugins": [
       "expo-splash-screen"
     ],
-    "extra": {
-      "apiUrl": "http://10.50.163.12:5000/api",
-      "eas": {
-        "projectId": "472c34e7-5bff-468c-b18e-2554ad0da303"
-      }
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.securegate.app",
@@ -35,6 +29,10 @@
         "CAMERA"
       ]
     },
-    "owner": "krushna081s-organization"
+    "owner": "krushna081s-organization",
+    "platforms": [
+      "ios",
+      "android"
+    ]
   }
 }

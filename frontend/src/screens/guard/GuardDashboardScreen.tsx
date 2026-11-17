@@ -8,7 +8,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../context/ThemeContext';
 import { visitorService } from '../../services/visitorService';
 import { meetingService } from '../../services/meetingService';
-import { authService } from '../../services/authService';
+import authService from '../../services/authService';
 import { useAuth } from '../../context/AuthContext';
 import StatsCard from '../../components/StatsCard';
 import VisitCard from '../../components/VisitCard';
@@ -23,6 +23,7 @@ import { Visitor, Meeting } from '../../types';
 const GuardDashboardScreen = () => {
   const { colors, shadows } = useTheme();
   const [visitors, setVisitors] = useState<Visitor[]>([]);
+  const [stats, setStats] = useState({ total: 0, pending: 0, approvedToday: 0, rejectedToday: 0, today: 0 });
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedVisitor, setSelectedVisitor] = useState<Visitor | null>(null);
@@ -46,19 +47,22 @@ const GuardDashboardScreen = () => {
   const fetchData = async () => {
     loadStart.current = Date.now();
     try {
-      const [vData, mData, pData] = await Promise.all([
-        visitorService.getAll({}),
+      const [vData, statsData, mData, pData] = await Promise.all([
+        visitorService.getAll({ limit: 5 }),
+        visitorService.getStats(),
         meetingService.getAll(),
         authService.getProfile(),
       ]);
       setVisitors(vData.visitors || []);
+      setStats(statsData);
       setMeetings(mData.meetings || []);
       if (pData.user && JSON.stringify(pData.user) !== JSON.stringify(user)) {
-        const token = await import('../../services/api').then(m => m.getToken());
+        const token = await import('../../services/tokenStorage').then(m => m.getToken());
         if (token) login(pData.user, token);
       }
     } catch {
       setVisitors([]);
+      setStats({ total: 0, pending: 0, approvedToday: 0, rejectedToday: 0, today: 0 });
       setMeetings([]);
     } finally {
       const elapsed = Date.now() - loadStart.current;
@@ -170,10 +174,10 @@ const GuardDashboardScreen = () => {
     return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
   };
 
-  const pending = visitors.filter((v) => v.status === 'pending').length;
-  const approved = visitors.filter((v) => v.status === 'approved').length;
-  const rejected = visitors.filter((v) => v.status === 'rejected').length;
-  const today = visitors.length;
+  const pending = stats.pending;
+  const approved = stats.approvedToday;
+  const rejected = stats.rejectedToday;
+  const today = stats.today;
 
   const getHourLabel = (): string => {
     const h = new Date().getHours();

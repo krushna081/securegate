@@ -2,7 +2,6 @@ import { Response } from 'express';
 import { AuthRequest } from '../middleware/authMiddleware';
 import Notification from '../models/Notification';
 import Visitor from '../models/Visitor';
-import Flat from '../models/Flat';
 import { notifyResidentBatch } from '../services/pushService';
 
 export const getMyNotifications = async (req: AuthRequest, res: Response) => {
@@ -12,7 +11,7 @@ export const getMyNotifications = async (req: AuthRequest, res: Response) => {
       .limit(50);
 
     res.json({ notifications });
-  } catch (error) {
+  } catch {
     res.status(500).json({ message: 'Failed to fetch notifications' });
   }
 };
@@ -25,7 +24,7 @@ export const markAsRead = async (req: AuthRequest, res: Response) => {
       { isRead: true },
     );
     res.json({ success: true });
-  } catch (error) {
+  } catch {
     res.status(500).json({ message: 'Failed to mark as read' });
   }
 };
@@ -37,7 +36,7 @@ export const markAllAsRead = async (req: AuthRequest, res: Response) => {
       { isRead: true },
     );
     res.json({ success: true });
-  } catch (error) {
+  } catch {
     res.status(500).json({ message: 'Failed to mark all as read' });
   }
 };
@@ -46,7 +45,7 @@ export const getUnreadCount = async (req: AuthRequest, res: Response) => {
   try {
     const count = await Notification.countDocuments({ userId: req.user!._id, isRead: false });
     res.json({ count });
-  } catch (error) {
+  } catch {
     res.status(500).json({ message: 'Failed to get count' });
   }
 };
@@ -95,7 +94,7 @@ export const catchUpMissedVisitors = async (req: AuthRequest, res: Response) => 
       missed: pendingVisitors.length,
       visitors: pendingVisitors,
     });
-  } catch (error) {
+  } catch {
     res.status(500).json({ message: 'Failed to catch up' });
   }
 };
@@ -118,7 +117,7 @@ export const getPendingVisitorsCatchup = async (req: AuthRequest, res: Response)
       .sort({ createdAt: -1 });
 
     res.json({ visitors });
-  } catch (error) {
+  } catch {
     res.status(500).json({ message: 'Failed to fetch pending visitors' });
   }
 };
