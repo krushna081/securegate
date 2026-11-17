@@ -14,7 +14,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint \"src/**/*.ts\" --max-warnings=0",
     "format:check": "prettier --check \"src/**/*.ts\" \"tests/**/*.ts\"",
-    "test": "JWT_SECRET=test-secret-that-is-long-enough-for-hs256-signing MONGO_URI=mongodb://localhost:27017/securegate-test ALLOW_DEV_OTP=true NODE_ENV=test jest --runInBand --passWithNoTests",
+    "test": "npm run build && JWT_SECRET=test-secret-that-is-long-enough-for-hs256-signing MONGO_URI=mongodb://localhost:27017/securegate-test ALLOW_DEV_OTP=true NODE_ENV=test jest --runInBand --passWithNoTests",
     "test:watch": "jest --watch",
     "create-admin": "ts-node src/scripts/createAdmin.ts"
   },
